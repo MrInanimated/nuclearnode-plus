@@ -1,0 +1,150 @@
+.emoticon {
+    display: inline-block;
+    margin: -5px 0;
+    padding-top: 5px;
+    vertical-align: baseline !important;
+}
+
+#ChatLog .highlighted {
+    background: rgba(255, 0, 0, 0.05);
+}
+
+#ChatLog .highlighted:hover {
+    background: rgba(255, 0, 0, 0.1);
+}
+
+#ChatLogPanel {
+    position: relative;
+}
+
+#MoreMessagesAlert {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    height: 0px;
+    transition: height 0.2s;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+#MoreMessagesAlert.show {
+    height: 2em;
+}
+
+#MoreMessagesAlertInner {
+    position: absolute;
+    text-align: center;
+    width: 100%;
+    top: 0.5em;
+}
+
+#NPlusSettingsTab {
+    text-align: left;
+    overflow-y: auto;
+}
+
+#NPlusSettingsTab h2,
+#NPlusSettingsTab h3 {
+    padding: 0.5em 0.5em 0;
+    opacity: 0.5;
+}
+
+.settings-heading:hover {
+    text-shadow: 0 0 24px white;
+}
+
+#NPlusSettingsTab .settings-table {
+    width: 100%;
+}
+
+.settings-wrapper {
+    padding: 0.5em;
+}
+
+#NPlusSettingsTab .settings-table tr td:nth-child(1) {
+    width: 40%;
+}
+
+#NPlusSettingsTab .settings-table tr td:nth-child(2) {
+    width: 60%;
+}
+
+#NPlusSettingsTab .settings-table input,
+#NPlusSettingsTab .settings-table button:not(.UnbanUser),
+#NPlusSettingsTab .settings-table select,
+#NPlusSettingsTab .settings-table textarea {
+    width: 100%;
+    background: #444;
+    border: none;
+    padding: 0.25em;
+    color: #fff;
+    font: inherit;
+}
+
+#NPlusSettingsTab small.help {
+    cursor: help;
+}
+
+.context-menu-list {
+    margin: 0 !important;
+}
+
+.user-table {
+    width: 100%;
+}
+
+.user-row {
+    display: flex;
+}
+
+.user-row .User,
+.user-row .IgnoredUser {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.user-row .IgnoredUser {
+    padding-left: 1em;
+}
+
+.user-role {
+    margin-top: -2px;
+    text-align: center;
+    min-width: 1em;
+}
+
+.user-role-hubAdministrator::before {
+  content: '[★]';
+  color: #c63;
+}
+
+.user-role-host::before {
+  content: '★';
+  color: #dc8;
+}
+
+.user-role-administrator::before {
+  content: '☆';
+  color: #dc8;
+}
+
+.user-role-moderator::before {
+  content: '●';
+  color: #346192;
+}
+
+.user-row button {
+    background: none;
+    color: inherit;
+    border: none;
+    font-size: small;
+    outline: none;
+}
+
+.user-row button:active {
+    background: rgba(255, 255, 255, 0.2);
+}
