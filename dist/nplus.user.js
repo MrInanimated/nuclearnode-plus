@@ -7,7 +7,7 @@
 // @match        http://popsauce.sparklinlabs.com/play/*
 // @match        http://masterofthegrid.sparklinlabs.com/play/*
 // @match        http://gemblasters.sparklinlabs.com/play/*
-// @resource     styles https://github.com/MrInanimated/nuclearnode-plus/raw/master/dist/nplus.user.js
+// @resource     styles https://github.com/MrInanimated/nuclearnode-plus/raw/master/dist/nplus.css
 // @resource     twitch_global http://twitchemotes.com/api_cache/v2/global.json
 // @resource     twitch_subscriber http://twitchemotes.com/api_cache/v2/subscriber.json
 // @resource     ffz_emotes http://api.frankerfacez.com/v1/set/global
