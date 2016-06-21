@@ -440,7 +440,7 @@ JST["nuclearnode/chatUser"] = function (e) {
     return $result.html();
 };
 
-var scrollTolerance = 100;
+nPlus.scrollTolerance = 100;
 var originalAppendToChat = channel.appendToChat;
 channel.appendToChat = function (classes, message) {
     if (classes === "Info" && message.indexOf('class="User"') === -1) {
@@ -452,7 +452,7 @@ channel.appendToChat = function (classes, message) {
     // Scroll the chat down within a certain tolerance
     var chatLog = $("#ChatLog")[0];
     if (chatLog.scrollTop >
-        chatLog.scrollHeight - chatLog.clientHeight - scrollTolerance
+        chatLog.scrollHeight - chatLog.clientHeight - nPlus.scrollTolerance
     ) {
         chatLog.scrollTop = chatLog.scrollHeight;
     }
@@ -507,6 +507,10 @@ try {
         },
         "(ditto)": {
             src: "//cdn.betterttv.net/emote/554da1a289d53f2d12781907/1x",
+            titlePrefix: "(bttv) "
+        },
+        "(puke)": {
+            src: "//cdn.betterttv.net/emote/550288fe135896936880fdd4/1x",
             titlePrefix: "(bttv) "
         },
         "MikuStare": {
@@ -1278,7 +1282,7 @@ var core = function () {
     var updateScroll = throttle(function () {
         var chatLog = $("#ChatLog")[0];
         if (chatLog.scrollTop <=
-            chatLog.scrollHeight - chatLog.clientHeight - scrollTolerance) {
+            chatLog.scrollHeight - chatLog.clientHeight - nPlus.scrollTolerance) {
             $("#MoreMessagesAlert").addClass("show");
         }
         else{
