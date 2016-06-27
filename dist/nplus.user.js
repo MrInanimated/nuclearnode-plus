@@ -1,13 +1,15 @@
 // ==UserScript==
 // @name         NuclearNode+
-// @version      0.0.0
+// @version      0.0.1
 // @description  Tools + Utilities for NuclearNode games, including BombParty
 // @author       MrInanimated
+// @downloadURL  https://github.com/MrInanimated/nuclearnode-plus/raw/master/dist/nplus.user.js
 // @match        http://bombparty.sparklinlabs.com/play/*
 // @match        http://popsauce.sparklinlabs.com/play/*
 // @match        http://masterofthegrid.sparklinlabs.com/play/*
 // @match        http://gemblasters.sparklinlabs.com/play/*
 // @resource     styles https://github.com/MrInanimated/nuclearnode-plus/raw/master/dist/nplus.css
+// @resource     buttons https://github.com/MrInanimated/nuclearnode-plus/raw/master/dist/buttons.png
 // @resource     twitch_global http://twitchemotes.com/api_cache/v2/global.json
 // @resource     twitch_subscriber http://twitchemotes.com/api_cache/v2/subscriber.json
 // @resource     ffz_emotes http://api.frankerfacez.com/v1/set/global
@@ -45,8 +47,8 @@ var executeScript = function (source) {
     document.body.removeChild(script);
 };
 
-var loadJSON = function (resourceName, varName) {
-    var resource = GM_getResourceText(resourceName);
+var loadJSON = function (resource, resourceName, varName) {
+    resource = resource || GM_getResourceText(resourceName);
     if (resource) {
         var script = document.createElement("script");
         script.id = varName;
@@ -90,6 +92,10 @@ window.nPlus = {};
 var loaded = false;
 var waitingForLoad = [];
 
+var loadCheck = function () {
+    return window.$ && window.channel && channel.socket;
+};
+
 /**
  * Attaches a callback to be called when the NN+ core has loaded.
  * At the point the callback is executed, it's safe to assume the existence of
@@ -100,7 +106,7 @@ var waitingForLoad = [];
  * @param  {Function} callback Function to be called when NN+ core loads.
  */
 nPlus.waitForLoad = function (callback) {
-    if (loaded || channel.data) {
+    if (loaded || loadCheck()) {
         callback();
         return;
     }
@@ -112,7 +118,7 @@ var inner = function () {
 
 // It's either this or a bunch of terrible things to check for everything being
 // loaded. This is easier
-if (!window.$ || !window.channel || !channel.socket) {
+if (!loadCheck()) {
     setTimeout(inner, 100);
     return;
 }
@@ -1014,6 +1020,53 @@ $creditsTable = $("<table>")
     .addClass("settings-table")
     .appendTo($creditsWrapper);
 
+/* Header buttons */
+
+/**
+ * Add a header button to the header bar.
+ * When clicked, this.data.state will either be "true" or "false" when the
+ * callback is called.
+ * @param  {string}   on       CSS value for the background when button is on.
+ * @param  {string}   off      CSS value for the background when button is off.
+ * @param  {string}   id       ID of the button.
+ * @param  {string}   title    Title-text of the button when hovered over.
+ * @param  {string}   init     Initial state of the button.
+ * @param  {Function} callback Callback called on click.
+ */
+nPlus.makeHeaderButton = function (on, off, id, title, init, callback) {
+    var $button = $("<button>")
+        .addClass("header-button")
+        .attr("id", id)
+        .attr("title", title);
+
+    var $container = $("<div>")
+        .addClass("header-button-container")
+        .append($button)
+        .insertBefore($("header > *:last-child"));
+
+    $button.click(function (event) {
+        if (this.data.state === "true") {
+            this.data.state = "false";
+            this.style.background = off;
+        }
+        else {
+            this.data.state = "true";
+            this.style.background = on;
+        }
+
+        callback.apply(this, arguments);
+    });
+
+    if (init) {
+        $button.attr("data-state", "true");
+        $button.css("background", on);
+    }
+    else {
+        $button.attr("data-state", "false");
+        $button.css("background", off);
+    }
+};
+
 /**
  * Add a credits entry to the credits table.
  * @param {string} name    The name of the credits entry, in the first column.
@@ -1577,15 +1630,59 @@ var core = function () {
     nPlus.addCreditsHeader(i18n.t("nPlus:credits.core"));
     nPlus.addCreditsEntry(i18n.t("nPlus:credits.coder"), "MrInanimated");
 
+    nPlus.resources = JSON.parse($("#nplus-resources")[0].textContent);
+
     console.log("NN+: Core loaded");
 };
 nPlus.waitForLoad(core);
 
+var popsauce = function () {
+    nPlus.autoFocus = true;
+
+    nPlus.makeHeaderButton(
+        "url('" + nPlus.resources.buttons + "') 0 0",
+        "url('" + nPlus.resources.buttons + "') -30px 0",
+        "auto-focus-button",
+        i18n.t("nPlus:autoFocusButton"),
+        true,
+        function () {
+            if (this.data.state === "true") {
+                nPlus.autoFocus = true;
+            }
+            else {
+                nPlus.autoFocus = false;
+            }
+        });
+
+    nPlus.afterSocketEvent("score", function (event) {
+        if (nPlus.autoFocus && event.actorId === app.user.authId) {
+            setTimeout(function () {
+                $("#ChatInputBox").focus();
+            }, 400);
+        }
+    });
+
+    nPlus.afterSocketEvent("roundEnd", function () {
+        if (nPlus.autoFocus) {
+            setTimeout(function () {
+                $("#ChatInputBox").focus();
+            }, 400);
+        }
+    });
+
+    console.log("NN+: Popsauce loaded");
+};
+nPlus.waitForLoad(popsauce);
+
 };
 
-loadJSON("twitch_global", "twitch_global");
-loadJSON("twitch_subscriber", "twitch_subscriber");
-loadJSON("ffz_emotes", "ffz_emotes");
+loadJSON(null, "twitch_global", "twitch_global");
+loadJSON(null, "twitch_subscriber", "twitch_subscriber");
+loadJSON(null, "ffz_emotes", "ffz_emotes");
+
+loadJSON(JSON.stringify({
+    buttons: GM_getResourceURL("buttons")
+}), null, "nplus-resources");
 
 loadScript("//ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js",
     function () {

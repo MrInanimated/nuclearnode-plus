@@ -148,3 +148,31 @@
 .user-row button:active {
     background: rgba(255, 255, 255, 0.2);
 }
+
+.header-button-div {
+    display: box;
+    display: flex;
+    opacity: 0.3;
+}
+
+.header-button-div:hover {
+    opacity: 1;
+}
+
+.header-button {
+    display: box;
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    opacity: 0.5;
+}
+
+.header-button:hover {
+    opacity: 0.8;
+}
+
+.header-button:active {
+    opacity: 1;
+}
