@@ -71,10 +71,11 @@ It should be noted that attaching listeners via this method does not affect the
 listeners list `channel.socket` maintains. You may still manipulate the
 `channel.socket.listeners` lists if you wish.
 
-The actual execution order, when receiving a socket event, is this:  
-1. Listeners attached using `nPlus.beforeSocketEvent`, if any
-2. Listeners attached using `channel.socket.on`, if any
-3. Listeners attached using `nPlus.afterSocketEvent`, if any
+The actual execution order, when receiving a socket event, is this:
+
+    1. Listeners attached using `nPlus.beforeSocketEvent`, if any
+    2. Listeners attached using `channel.socket.on`, if any
+    3. Listeners attached using `nPlus.afterSocketEvent`, if any
 
 #### `nPlus.beforeSocketEvent(event: string, fn: Function)`
 #### `nPlus.afterSocketEvent(event: string, fn: Function)`
