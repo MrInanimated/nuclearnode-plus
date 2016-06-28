@@ -149,12 +149,13 @@
     background: rgba(255, 255, 255, 0.2);
 }
 
-.header-button-div {
+.header-button-container {
     display: flex;
+    height: 30px;
     opacity: 0.3;
 }
 
-.header-button-div:hover {
+.header-button-container:hover {
     opacity: 1;
 }
 
