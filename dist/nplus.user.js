@@ -137,6 +137,8 @@ i18n.addResourceBundle("en", "nPlus", {
 
     "moreMessages": "More messages below.",
 
+    "autoFocusButton": "Automatically focus the chat box after your turn.",
+
     "settingsButtonText": "NN+",
     "settingsButtonTitle": "NuclearNode+ Settings",
 
@@ -1667,6 +1669,9 @@ var popsauce = function () {
             }, 400);
         }
     });
+
+    // Turn autocomplete on the input field off
+    $("#GuessInput").attr("autocomplete", "off");
 
     console.log("NN+: Popsauce loaded");
 };
