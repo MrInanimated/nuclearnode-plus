@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         NuclearNode+
-// @version      0.0.1
+// @version      0.0.2
 // @description  Tools + Utilities for NuclearNode games, including BombParty
 // @author       MrInanimated
 // @downloadURL  https://github.com/MrInanimated/nuclearnode-plus/raw/master/dist/nplus.user.js
@@ -1024,7 +1024,7 @@ $creditsTable = $("<table>")
 
 /**
  * Add a header button to the header bar.
- * When clicked, this.data.state will either be "true" or "false" when the
+ * When clicked, this.dataset.state will either be "true" or "false" when the
  * callback is called.
  * @param  {string}   on       CSS value for the background when button is on.
  * @param  {string}   off      CSS value for the background when button is off.
@@ -1648,13 +1648,9 @@ var popsauce = function () {
         i18n.t("nPlus:autoFocusButton"),
         true,
         function () {
-            if (this.data.state === "true") {
-                nPlus.autoFocus = true;
-            }
-            else {
-                nPlus.autoFocus = false;
-            }
+            nPlus.autoFocus = this.dataset.state === "true";
         });
+    nPlus.autoFocus = true;
 
     nPlus.afterSocketEvent("score", function (event) {
         if (nPlus.autoFocus && event.actorId === app.user.authId) {
@@ -1664,8 +1660,8 @@ var popsauce = function () {
         }
     });
 
-    nPlus.afterSocketEvent("roundEnd", function () {
-        if (nPlus.autoFocus) {
+    nPlus.afterSocketEvent("roundEnded", function () {
+        if (nPlus.autoFocus && channel.data.actorsByAuthId[app.user.authId]) {
             setTimeout(function () {
                 $("#ChatInputBox").focus();
             }, 400);
