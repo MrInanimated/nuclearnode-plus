@@ -8,7 +8,7 @@
 // @match        http://popsauce.sparklinlabs.com/play/*
 // @match        http://masterofthegrid.sparklinlabs.com/play/*
 // @match        http://gemblasters.sparklinlabs.com/play/*
-// @resource     styles https://github.com/MrInanimated/nuclearnode-plus/raw/0a5a5943bd52d401d3ba98952c4554a9a7cd5d7f/dist/nplus.css
+// @resource     styles https://github.com/MrInanimated/nuclearnode-plus/raw/master/dist/nplus.css
 // @resource     buttons https://github.com/MrInanimated/nuclearnode-plus/raw/master/dist/buttons.png
 // @resource     twitch_global http://twitchemotes.com/api_cache/v2/global.json
 // @resource     twitch_subscriber http://twitchemotes.com/api_cache/v2/subscriber.json
@@ -1045,12 +1045,12 @@ nPlus.makeHeaderButton = function (on, off, id, title, init, callback) {
         .insertBefore($("header > *:last-child"));
 
     $button.click(function (event) {
-        if (this.data.state === "true") {
-            this.data.state = "false";
+        if (this.dataset.state === "true") {
+            this.dataset.state = "false";
             this.style.background = off;
         }
         else {
-            this.data.state = "true";
+            this.dataset.state = "true";
             this.style.background = on;
         }
 
@@ -1065,6 +1065,8 @@ nPlus.makeHeaderButton = function (on, off, id, title, init, callback) {
         $button.attr("data-state", "false");
         $button.css("background", off);
     }
+
+    return $button;
 };
 
 /**
@@ -1640,8 +1642,8 @@ var popsauce = function () {
     nPlus.autoFocus = true;
 
     nPlus.makeHeaderButton(
-        "url('" + nPlus.resources.buttons + "') 0 0",
-        "url('" + nPlus.resources.buttons + "') -30px 0",
+        "url('" + nPlus.resources.buttons + "') -60px 0",
+        "url('" + nPlus.resources.buttons + "') -90px 0",
         "auto-focus-button",
         i18n.t("nPlus:autoFocusButton"),
         true,
