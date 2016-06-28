@@ -7,6 +7,7 @@ Currently, the userscript works on these games:
 http://bombparty.sparklinlabs.com  
 http://popsauce.sparklinlabs.com  
 http://masterofthegrid.sparklinlabs.com  
+http://deathroulette.sparklinlabs.com  
 http://gemblasters.sparklinlabs.com  
 
 ## Installation
