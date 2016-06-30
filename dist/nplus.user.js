@@ -3,13 +3,13 @@
 // @version      0.0.3
 // @description  Tools + Utilities for NuclearNode games, including BombParty
 // @author       MrInanimated
-// @downloadURL  https://github.com/MrInanimated/nuclearnode-plus/raw/master/dist/nplus.user.js
+// @downloadURL  https://github.com/MrInanimated/nuclearnode-plus/raw/develop/dist/nplus.user.js
 // @match        http://bombparty.sparklinlabs.com/play/*
 // @match        http://popsauce.sparklinlabs.com/play/*
 // @match        http://masterofthegrid.sparklinlabs.com/play/*
 // @match        http://gemblasters.sparklinlabs.com/play/*
-// @resource     styles https://github.com/MrInanimated/nuclearnode-plus/raw/master/dist/nplus.css
-// @resource     buttons https://github.com/MrInanimated/nuclearnode-plus/raw/master/dist/buttons.png
+// @resource     styles https://github.com/MrInanimated/nuclearnode-plus/raw/develop/ter/dist/nplus.css
+// @resource     buttons https://github.com/MrInanimated/nuclearnode-plus/raw/develop/dist/buttons.png
 // @resource     twitch_global http://twitchemotes.com/api_cache/v2/global.json
 // @resource     twitch_subscriber http://twitchemotes.com/api_cache/v2/subscriber.json
 // @resource     ffz_emotes http://api.frankerfacez.com/v1/set/global
@@ -23,6 +23,8 @@
 
 // Load styles
 GM_addStyle(GM_getResourceText("styles"));
+GM_addStyle(".header-button.n-plus-core { background: url('" +
+    GM_getResourceURL("buttons") + "'); }");
 
 var loadScript = function (src, callback, pageCallback) {
     var script = document.createElement("script");
@@ -47,8 +49,8 @@ var executeScript = function (source) {
     document.body.removeChild(script);
 };
 
-var loadJSON = function (resource, resourceName, varName) {
-    resource = resource || GM_getResourceText(resourceName);
+var loadJSON = function (resourceName, varName) {
+    var resource = GM_getResourceText(resourceName);
     if (resource) {
         var script = document.createElement("script");
         script.id = varName;
@@ -1028,14 +1030,13 @@ $creditsTable = $("<table>")
  * Add a header button to the header bar.
  * When clicked, this.dataset.state will either be "true" or "false" when the
  * callback is called.
- * @param  {string}   on       CSS value for the background when button is on.
- * @param  {string}   off      CSS value for the background when button is off.
  * @param  {string}   id       ID of the button.
  * @param  {string}   title    Title-text of the button when hovered over.
  * @param  {string}   init     Initial state of the button.
  * @param  {Function} callback Callback called on click.
+ * @return {jQuery} jQuery object of the created button.
  */
-nPlus.makeHeaderButton = function (on, off, id, title, init, callback) {
+nPlus.makeHeaderButton = function (id, title, init, callback) {
     var $button = $("<button>")
         .addClass("header-button")
         .attr("id", id)
@@ -1049,11 +1050,9 @@ nPlus.makeHeaderButton = function (on, off, id, title, init, callback) {
     $button.click(function (event) {
         if (this.dataset.state === "true") {
             this.dataset.state = "false";
-            this.style.background = off;
         }
         else {
             this.dataset.state = "true";
-            this.style.background = on;
         }
 
         callback.apply(this, arguments);
@@ -1061,14 +1060,33 @@ nPlus.makeHeaderButton = function (on, off, id, title, init, callback) {
 
     if (init) {
         $button.attr("data-state", "true");
-        $button.css("background", on);
     }
     else {
         $button.attr("data-state", "false");
-        $button.css("background", off);
     }
 
     return $button;
+};
+
+/**
+ * Function for core-specific buttons.
+ * Not intended for public use.
+ */
+nPlus._makeHeaderButton = function (offset, id, title, init, callback) {
+    var $button = nPlus.makeHeaderButton(id, title, init, function () {
+        if (this.dataset.state === "true") {
+            this.style.backgroundPosition = offset + "px 0";
+        }
+        else {
+            this.style.backgroundPosition = (offset - 30) + "px 0";
+        }
+
+        callback.apply(this, arguments);
+    });
+
+    $button
+        .addClass("n-plus-core")
+        .style("background-position", (offset - (init ? 0 : 30)) + "px 0");
 };
 
 /**
@@ -1634,8 +1652,6 @@ var core = function () {
     nPlus.addCreditsHeader(i18n.t("nPlus:credits.core"));
     nPlus.addCreditsEntry(i18n.t("nPlus:credits.coder"), "MrInanimated");
 
-    nPlus.resources = JSON.parse($("#nplus-resources")[0].textContent);
-
     console.log("NN+: Core loaded");
 };
 nPlus.waitForLoad(core);
@@ -1646,9 +1662,8 @@ var popsauce = function () {
 
     nPlus.autoFocus = true;
 
-    nPlus.makeHeaderButton(
-        "url('" + nPlus.resources.buttons + "') -60px 0",
-        "url('" + nPlus.resources.buttons + "') -90px 0",
+    nPlus._makeHeaderButton(
+        -60,
         "auto-focus-button",
         i18n.t("nPlus:autoFocusButton"),
         true,
@@ -1682,13 +1697,9 @@ nPlus.waitForLoad(popsauce);
 
 };
 
-loadJSON(null, "twitch_global", "twitch_global");
-loadJSON(null, "twitch_subscriber", "twitch_subscriber");
-loadJSON(null, "ffz_emotes", "ffz_emotes");
-
-loadJSON(JSON.stringify({
-    buttons: GM_getResourceURL("buttons")
-}), null, "nplus-resources");
+loadJSON("twitch_global", "twitch_global");
+loadJSON("twitch_subscriber", "twitch_subscriber");
+loadJSON("ffz_emotes", "ffz_emotes");
 
 loadScript("//ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js",
     function () {
