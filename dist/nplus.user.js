@@ -1086,7 +1086,7 @@ nPlus._makeHeaderButton = function (offset, id, title, init, callback) {
 
     $button
         .addClass("n-plus-core")
-        .style("background-position", (offset - (init ? 0 : 30)) + "px 0");
+        .css("background-position", (offset - (init ? 0 : 30)) + "px 0");
 };
 
 /**
