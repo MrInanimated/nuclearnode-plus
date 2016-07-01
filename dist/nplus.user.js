@@ -241,7 +241,7 @@ channel.socket.onevent = function (packet) {
             }
             catch (e) {
                 // TODO: better error handling here
-                console.error(e);
+                console.error(e.stack);
             }
         });
     }
@@ -255,7 +255,7 @@ channel.socket.onevent = function (packet) {
                 j.apply(that, data);
             }
             catch (e) {
-                console.error(e);
+                console.error(e.stack);
             }
         });
     }
@@ -374,9 +374,12 @@ var customEvents = {};
  * @param  {...*}   args  A number of arguments to pass to the handlers.
  */
 nPlus.fireEvent = function (event, args) {
+    console.log(arguments);
+
     if (customEvents[event]) {
         args = Array.prototype.slice.call(arguments, 1);
         $.each(customEvents[event], function (i, j) {
+            console.log(arguments);
             j.apply(window, args);
         });
     }
@@ -1656,6 +1659,163 @@ var core = function () {
 };
 nPlus.waitForLoad(core);
 
+var bombparty = function () {
+    if (app.appId !== "BombParty")
+        return;
+
+    var alphabet = "abcdefghijklmnopqrstuvwxyz";
+
+    nPlus.autoFocus = true;
+
+    nPlus._makeHeaderButton(
+        -60,
+        "auto-focus-button",
+        i18n.t("nPlus:autoFocusButton"),
+        true,
+        function () {
+            nPlus.autoFocus = this.dataset.state === "true";
+        });
+
+    /* Event hooks */
+    nPlus.afterSocketEvent("setState", function (state) {
+        switch (state) {
+            case "playing":
+                nPlus.fireEvent("initGame");
+                nPlus.fireEvent("gameStart");
+                break;
+            case "waitingForPlayers":
+                nPlus.fireEvent("waiting");
+                break;
+            case "starting":
+                nPlus.fireEvent("starting");
+                break;
+        }
+    });
+
+    nPlus.afterSocketEvent("setActivePlayerIndex", function (index) {
+        nPlus.fireEvent("newTurn", channel.data.actors[index], index);
+    });
+
+    // Wrap this in a closure
+    (function () {
+    // Just keep track of a temporary variable here
+    // This is okay because these two functions will be called sequentially
+    // on the same person; the handlers can't be invoked between each other
+    // because of the nature of javascript
+    var flipped;
+    var lives;
+    nPlus.beforeSocketEvent("winWord", function (event) {
+        var actor = channel.data.actorsByAuthId[event.playerAuthId];
+        lives = actor.lives;
+        var lockedLetters = actor.lockedLetters.slice();
+        var lettersLeft = lockedLetters.filter(function (i) {
+            return actor.lastWord.toLowerCase().indexOf(i) < 0;
+        });
+        flipped = lettersLeft.length === 0;
+    });
+
+    nPlus.afterSocketEvent("winWord", function (event) {
+        var actor = channel.data.actorsByAuthId[event.playerAuthId];
+        actor.nPlus.words++;
+        channel.data.nPlus.wordCount++;
+
+        var uflipped = false;
+        if (flipped) {
+            actor.nPlus.flips++;
+            if (lives === app.public.maxLives) {
+                uflipped = true;
+                actor.nPlus.uflips++;
+            }
+        }
+
+        var alpha = false;
+        var cycle = false;
+        var requiredLetter = alphabet[actor.nPlus.alpha.progress];
+        if (actor.lastWord.toLowerCase()[0] === requiredLetter) {
+            alpha = true;
+            if (++actor.nPlus.alpha.progress >= alphabet.length) {
+                cycle = true;
+                actor.nPlus.alpha.progress = 0;
+                actor.nPlus.alpha.completed++;
+            }
+        }
+
+        // The flags are there so the events are fired after the relevant
+        // information is updated.
+        nPlus.fireEvent("winWord", actor);
+        if (flipped) nPlus.fireEvent("flip", actor);
+        if (uflipped) nPlus.fireEvent("uflip", actor);
+        if (alpha) nPlus.fireEvent("alphaProgress", actor);
+        if (cycle) nPlus.fireEvent("alphaComplete", actor);
+    });
+    })();
+
+    // Another closure!
+    (function () {
+    var lostLife;
+    nPlus.beforeSocketEvent("setPlayerLives", function (event) {
+        var actor = channel.data.actorsByAuthId[event.playerAuthId];
+        lostLife = event.lives > actor.lives;
+    });
+
+    nPlus.afterSocketEvent("setPlayerLives", function (event) {
+        var actor = channel.data.actorsByAuthId[event.playerAuthId];
+        if (lostLife) {
+            actor.nPlus.livesLost++;
+            nPlus.fireEvent("lostLife", actor);
+        }
+    });
+    })();
+
+    nPlus.afterSocketEvent("setPlayerState", function (event) {
+        var actor = channel.data.actorsByAuthId[event.playerAuthId];
+        if (event.state === "dead") {
+            nPlus.fireEvent("death", actor);
+        }
+    });
+
+    nPlus.afterSocketEvent("endGame", function (event) {
+        channel.data.nPlus.end = Date.now();
+        nPlus.fireEvent("endGame");
+    });
+
+    // Game initialization
+    var getStatsObject = function () {
+        return {
+            flips: 0,
+            uflips: 0,
+            livesLost: 0,
+            words: 0,
+            alpha: {
+                progress: 0,
+                completed: 0,
+            },
+        };
+    };
+
+    // Initialize
+    nPlus.on("initGame", function () {
+        for (var i = 0; i < channel.data.actors.length; i++) {
+            var actor = channel.data.actors[i];
+            actor.nPlus = getStatsObject();
+        }
+
+        channel.data.nPlus = {
+            start: Date.now(),
+            wordCount: 0,
+        };
+    });
+
+    // Init end
+    // Fire a preliminary initGame if game is already started
+    if (channel.data.state === "playing") {
+        nPlus.fireEvent("initGame");
+    }
+
+    console.log("NN+: BombParty loaded.");
+};
+nPlus.waitForLoad(bombparty);
+
 var popsauce = function () {
     if (app.appId !== "PopSauce")
         return;
@@ -1670,7 +1830,6 @@ var popsauce = function () {
         function () {
             nPlus.autoFocus = this.dataset.state === "true";
         });
-    nPlus.autoFocus = true;
 
     nPlus.afterSocketEvent("score", function (event) {
         if (nPlus.autoFocus && event.actorId === app.user.authId) {
@@ -1691,7 +1850,7 @@ var popsauce = function () {
     // Turn autocomplete on the input field off
     $("#GuessInput").attr("autocomplete", "off");
 
-    console.log("NN+: Popsauce loaded");
+    console.log("NN+: PopSauce loaded");
 };
 nPlus.waitForLoad(popsauce);
 
