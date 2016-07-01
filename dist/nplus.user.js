@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         NuclearNode+
-// @version      0.0.3
+// @version      0.0.4
 // @description  Tools + Utilities for NuclearNode games, including BombParty
 // @author       MrInanimated
 // @downloadURL  https://github.com/MrInanimated/nuclearnode-plus/raw/master/dist/nplus.user.js
@@ -499,7 +499,7 @@ nPlus.addCustomEmote = function (emote) {
     };
 
     if (code.search(/\W/) > -1) {
-        twitch.nonalphabetic[code] = twitch[code];
+        twitch.nonalphabetic[code] = twitch.emotes[code];
     }
 };
 
