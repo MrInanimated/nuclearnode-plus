@@ -9,7 +9,6 @@
 // @match        http://masterofthegrid.sparklinlabs.com/play/*
 // @match        http://gemblasters.sparklinlabs.com/play/*
 // @resource     styles https://github.com/MrInanimated/nuclearnode-plus/raw/develop/dist/nplus.css
-// @resource     buttons https://github.com/MrInanimated/nuclearnode-plus/raw/develop/dist/buttons.png
 // @resource     twitch_global http://twitchemotes.com/api_cache/v2/global.json
 // @resource     twitch_subscriber http://twitchemotes.com/api_cache/v2/subscriber.json
 // @resource     ffz_emotes http://api.frankerfacez.com/v1/set/global
@@ -23,8 +22,6 @@
 
 // Load styles
 GM_addStyle(GM_getResourceText("styles"));
-GM_addStyle(".header-button.n-plus-core { background: url('" +
-    GM_getResourceURL("buttons") + "'); }");
 
 var loadScript = function (src, callback, pageCallback) {
     var script = document.createElement("script");
@@ -95,7 +92,7 @@ var loaded = false;
 var waitingForLoad = [];
 
 var loadCheck = function () {
-    return window.$ && window.channel && channel.socket;
+    return window.$ && $.ui && window.channel && channel.socket;
 };
 
 /**
@@ -374,12 +371,9 @@ var customEvents = {};
  * @param  {...*}   args  A number of arguments to pass to the handlers.
  */
 nPlus.fireEvent = function (event, args) {
-    console.log(arguments);
-
     if (customEvents[event]) {
         args = Array.prototype.slice.call(arguments, 1);
         $.each(customEvents[event], function (i, j) {
-            console.log(arguments);
             j.apply(window, args);
         });
     }
@@ -849,6 +843,7 @@ $("<button>")
 // Add the actual tab
 var $settingsTab = $("<div>")
     .attr("id", "NPlusSettingsTab")
+    .append($("<div>").attr("id", "DummyListeners"))
     .append($("<div>").attr("id", "SettingsEndMarker"))
     .append($("<div>").attr("id", "CreditsEndMarker"))
     .appendTo($("#SidebarTabs"));
@@ -1088,7 +1083,7 @@ nPlus._makeHeaderButton = function (offset, id, title, init, callback) {
     });
 
     $button
-        .addClass("n-plus-core")
+        .addClass("n-plus-core-button")
         .css("background-position", (offset - (init ? 0 : 30)) + "px 0");
 };
 
@@ -1668,7 +1663,7 @@ var bombparty = function () {
     nPlus.autoFocus = true;
 
     nPlus._makeHeaderButton(
-        -60,
+        0,
         "auto-focus-button",
         i18n.t("nPlus:autoFocusButton"),
         true,
@@ -1755,7 +1750,7 @@ var bombparty = function () {
     var lostLife;
     nPlus.beforeSocketEvent("setPlayerLives", function (event) {
         var actor = channel.data.actorsByAuthId[event.playerAuthId];
-        lostLife = event.lives > actor.lives;
+        lostLife = event.lives < actor.lives;
     });
 
     nPlus.afterSocketEvent("setPlayerLives", function (event) {
@@ -1793,6 +1788,141 @@ var bombparty = function () {
         };
     };
 
+    // Make the scoreboard
+    var $dockedContainer = $("<div>")
+        .attr("id", "NPlusScoreboardDock")
+        .addClass("n-plus-scoreboard-container")
+        .insertBefore("#Sidebar > *:first-child");
+
+    var $dragContainer = $("<div>")
+        .attr("id", "NPlusDragContainer")
+        .addClass("n-plus-scoreboard-container")
+        .appendTo("#App > main");
+
+    var $scoreboard = $(
+        '<div id="NPlusScoreboard">' +
+            '<h2 id="ScoreboardTime"></h2>' +
+            '<h2 id="ScoreboardWords"></h2>' +
+            '<hr>' +
+            '<div id="ScoreboardTableContainer">' +
+                '<table id="ScoreboardTable">' +
+                    '<thead>' +
+                        '<tr>' +
+                            '<td id="ScoreboardButtonContainer></td>' +
+                            '<td class="scoreboard-flips></td>' +
+                            '<td class="scoreboard-uflips></td>' +
+                            '<td class="scoreboard-alphas></td>' +
+                            '<td class="scoreboard-words></td>' +
+                        '</tr>' +
+                    '</thead>' +
+                    '<tbody id="ScoreboardTableBody"></tbody>' +
+                '</table>' +
+            '</div>' +
+        '</div>'
+    );
+
+    // Slightly not DRY
+    // whatever
+    $scoreboard
+        .find("#ScoreboardFlips")
+        .text(i18n.t("nPlus:flipsText"))
+        .attr("title", i18n.t("nPlus:flipsTitle"));
+    $scoreboard
+        .find("#ScoreboardUFlips")
+        .text(i18n.t("nPlus:uflipsText"))
+        .attr("title", i18n.t("nPlus:uflipsTitle"));
+    $scoreboard
+        .find("#ScoreboardAlpha")
+        .text(i18n.t("nPlus:alphaText"))
+        .attr("title", i18n.t("nPlus:alphaTitle"));
+    $scoreboard
+        .find("#ScoreboardWords")
+        .text(i18n.t("nPlus:wordsText"))
+        .attr("title", i18n.t("nPlus:wordsTitle"));
+
+    $scoreboard
+        .find("#ScoreboardButtonContainer")
+        .append(
+            $("<button>")
+                .attr("id", "ScoreboardHideButton")
+                .click(function () {
+                    $scoreboard.toggleClass("hide-dead");
+                })
+        );
+
+    var $scoreboardTable = $scoreboard.find("#ScoreboardTableBody");
+
+    var makeAlpha = function (alpha) {
+        return alpha.completed + "-" + alphabet[alpha.progress].toUpperCase();
+    };
+
+    var scoreboardName = function (actor) {
+        if (actor.authId.split(":")[0] === "guest") {
+            return "G. " + actor.authId.split(":")[1];
+        }
+        return actor.displayName;
+    };
+
+    var addActorRow = function (actor) {
+        $scoreboardTable.append(
+            $("<tr>")
+                .addClass(actor.authId.replace(":", "_"))
+                .append(
+                    $("<td>")
+                        .addClass("scoreboard-name")
+                        .text(scoreboardName(actor))
+                )
+                .append(
+                    $("<td>")
+                        .addClass("scoreboard-flips")
+                        .text(actor.nPlus.flips)
+                )
+                .append(
+                    $("<td>")
+                        .addClass("scoreboard-uflips")
+                        .text(actor.nPlus.uflips)
+                )
+                .append(
+                    $("<td>")
+                        .addClass("scoreboard-alphas")
+                        .text(makeAlpha(actor.nPlus.alpha))
+                )
+                .append(
+                    $("<td>")
+                        .addClass("scoreboard-words")
+                        .text(actor.nPlus.words)
+                )
+        );
+    };
+
+    var updateProp = function (actor, prop) {
+        var selector = "." + actor.authId.replace(":", "_") + " .scoreboard-";
+        var value;
+        switch (prop) {
+            case "flips":
+                selector += "flips";
+                value = actor.nPlus.flips;
+                break;
+            case "uflips":
+                selector += "uflips";
+                value = actor.nPlus.uflips;
+                break;
+            case "alphas":
+                selector += "alphas";
+                value = makeAlpha(actor.nPlus.alpha);
+                break;
+            case "words":
+                selector += "words";
+                value = actor.nPlus.words;
+                break;
+            default:
+                return;
+        }
+        $(selector).text(value);
+    };
+
+    // TODO: hookup the buttons to things
+
     // Initialize
     nPlus.on("initGame", function () {
         for (var i = 0; i < channel.data.actors.length; i++) {
@@ -1806,13 +1936,13 @@ var bombparty = function () {
         };
     });
 
+    console.log("NN+: BombParty loaded.");
+
     // Init end
     // Fire a preliminary initGame if game is already started
     if (channel.data.state === "playing") {
         nPlus.fireEvent("initGame");
     }
-
-    console.log("NN+: BombParty loaded.");
 };
 nPlus.waitForLoad(bombparty);
 
@@ -1866,6 +1996,8 @@ loadScript("//ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js",
         loadStyle("//cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.1.1/jquery.contextMenu.min.css");
     }
 );
+loadScript("//ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js");
+loadStyle("//ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/smoothness/jquery-ui.css");
 loadScript("//cdnjs.cloudflare.com/ajax/libs/autolinker/0.24.1/Autolinker.min.js");
 executeScript("(" + main + ")();");
 
