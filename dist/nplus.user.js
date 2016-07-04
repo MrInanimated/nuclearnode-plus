@@ -137,6 +137,24 @@ i18n.addResourceBundle("en", "nPlus", {
     "moreMessages": "More messages below.",
 
     "autoFocusButton": "Automatically focus the chat box after your turn.",
+    "dragonButton": "Detach the scoreboard to a draggable container.",
+    "hideDead": "Hide dead players in the scoreboard.",
+
+    "timeText": "Elapsed Time: %{time}",
+    "wordCountText": "Word Count: %{words}",
+
+    "flipsText": "Flips",
+    "flipsTitle": "How many lives this player has regained.",
+    "uflipsText": "U-Flips",
+    "uflipsTitle": "How many lives this player has regained already at max lives.",
+    "livesLostText": "Deaths",
+    "livesLostTitle": "How many lives this player has lost.",
+    "alphaText": "Alpha",
+    "alphaTitle": "Progress of the player through the alphabet.",
+    "wordsText": "Words",
+    "wordsTitle": "How many words this player has used.",
+
+    "dummyRow": "There's nothing here yet...",
 
     "settingsButtonText": "NN+",
     "settingsButtonTitle": "NuclearNode+ Settings",
@@ -171,8 +189,8 @@ i18n.addResourceBundle("en", "nPlus", {
             }
         },
         "alias": {
-            "name": "Aliases",
-            "title": "Change the aliases that will trigger a notification.\nEnter a list of aliases separated by semicolons, e.g. MrInanimated;Inanimated;Animé;Inan",
+            "name": "Mentions",
+            "title": "Change the phrases that will trigger a notification.\nEnter a list of phrases separated by semicolons, e.g. MrInanimated;Inanimated;Animé;Inan",
         },
     },
 
@@ -1070,7 +1088,9 @@ nPlus.makeHeaderButton = function (id, title, init, callback) {
  * Function for core-specific buttons.
  * Not intended for public use.
  */
-nPlus._makeHeaderButton = function (offset, id, title, init, callback) {
+nPlus._makeHeaderButton = function (offset, id, settingsId, title, init, callback) {
+    var $listener;
+
     var $button = nPlus.makeHeaderButton(id, title, init, function () {
         if (this.dataset.state === "true") {
             this.style.backgroundPosition = offset + "px 0";
@@ -1080,11 +1100,32 @@ nPlus._makeHeaderButton = function (offset, id, title, init, callback) {
         }
 
         callback.apply(this, arguments);
+
+        $listener[0].dataset.nPlusData = this.dataset.state;
+        $listener[0].dispatchEvent(new Event("nPlusData"));
     });
 
     $button
         .addClass("n-plus-core-button")
         .css("background-position", (offset - (init ? 0 : 30)) + "px 0");
+
+    $listener = $("<div>")
+        .attr("id", settingsId)
+        .attr("data-n-plus", "data")
+        .attr("data-n-plus-data", init)
+        .on("nPlusDataInitial", function () {
+            switch (this.dataset.nPlusData) {
+                case "true":
+                case "false":
+                    if (this.dataset.nPlusData !== $button[0].dataset.state) {
+                        $button.click();
+                    }
+                    break;
+            }
+        })
+        .appendTo($("#DummyListeners"));
+
+    return $button;
 };
 
 /**
@@ -1664,7 +1705,8 @@ var bombparty = function () {
 
     nPlus._makeHeaderButton(
         0,
-        "auto-focus-button",
+        "AutoFocusButton",
+        "AutoFocusSetting",
         i18n.t("nPlus:autoFocusButton"),
         true,
         function () {
@@ -1797,7 +1839,11 @@ var bombparty = function () {
     var $dragContainer = $("<div>")
         .attr("id", "NPlusDragContainer")
         .addClass("n-plus-scoreboard-container")
-        .appendTo("#App > main");
+        .appendTo("#App > main")
+        .draggable({
+            containment: "#App > main",
+            scroll: false,
+        });
 
     var $scoreboard = $(
         '<div id="NPlusScoreboard">' +
@@ -1808,14 +1854,19 @@ var bombparty = function () {
                 '<table id="ScoreboardTable">' +
                     '<thead>' +
                         '<tr>' +
-                            '<td id="ScoreboardButtonContainer></td>' +
-                            '<td class="scoreboard-flips></td>' +
-                            '<td class="scoreboard-uflips></td>' +
-                            '<td class="scoreboard-alphas></td>' +
-                            '<td class="scoreboard-words></td>' +
+                            '<td id="ScoreboardButtonContainer"></td>' +
+                            '<td class="scoreboard-data scoreboard-flips"></td>' +
+                            '<td class="scoreboard-data scoreboard-uflips"></td>' +
+                            '<td class="scoreboard-data scorebaord-lives-lost"></td>' +
+                            '<td class="scoreboard-data scoreboard-alphas"></td>' +
+                            '<td class="scoreboard-data scoreboard-words"></td>' +
                         '</tr>' +
                     '</thead>' +
-                    '<tbody id="ScoreboardTableBody"></tbody>' +
+                    '<tbody id="ScoreboardTableBody">' +
+                        '<tr>' +
+                            '<td class="dummy-row" colspan=6></td>' +
+                        '</tr>' +
+                    '</tbody>' +
                 '</table>' +
             '</div>' +
         '</div>'
@@ -1824,30 +1875,53 @@ var bombparty = function () {
     // Slightly not DRY
     // whatever
     $scoreboard
-        .find("#ScoreboardFlips")
+        .find("#ScoreboardTime")
+        .text(i18n.t("nPlus:timeText", {time: "0:00"}));
+    $scoreboard
+        .find("#ScoreboardWords")
+        .text(i18n.t("nPlus:wordCountText", {words: 0}));
+
+    $scoreboard
+        .find(".scoreboard-flips")
         .text(i18n.t("nPlus:flipsText"))
         .attr("title", i18n.t("nPlus:flipsTitle"));
     $scoreboard
-        .find("#ScoreboardUFlips")
+        .find(".scoreboard-uflips")
         .text(i18n.t("nPlus:uflipsText"))
         .attr("title", i18n.t("nPlus:uflipsTitle"));
     $scoreboard
-        .find("#ScoreboardAlpha")
+        .find(".scorebaord-lives-lost")
+        .text(i18n.t("nPlus:livesLostText"))
+        .attr("title", i18n.t("nPlus:livesLostTitle"));
+    $scoreboard
+        .find(".scoreboard-alphas")
         .text(i18n.t("nPlus:alphaText"))
         .attr("title", i18n.t("nPlus:alphaTitle"));
     $scoreboard
-        .find("#ScoreboardWords")
+        .find(".scoreboard-words")
         .text(i18n.t("nPlus:wordsText"))
         .attr("title", i18n.t("nPlus:wordsTitle"));
 
     $scoreboard
+        .find(".dummy-row")
+        .text(i18n.t("nPlus:dummyRow"));
+
+    $scoreboard
         .find("#ScoreboardButtonContainer")
         .append(
-            $("<button>")
-                .attr("id", "ScoreboardHideButton")
-                .click(function () {
-                    $scoreboard.toggleClass("hide-dead");
+            nPlus._makeHeaderButton(
+                -120,
+                "ScoreboardHideButton",
+                "ScoreboardHideSettings",
+                i18n.t("nPlus:hideDead",
+                false,
+                function () {
+                    if (this.dataset.state === "true")
+                        $scoreboard.addClass("hide-dead");
+                    else
+                        $scoreboard.removeClass("hide-dead");
                 })
+            ).detach()
         );
 
     var $scoreboardTable = $scoreboard.find("#ScoreboardTableBody");
@@ -1921,7 +1995,18 @@ var bombparty = function () {
         $(selector).text(value);
     };
 
-    // TODO: hookup the buttons to things
+    nPlus._makeHeaderButton(
+        -60,
+        "DragonButton",
+        "DragonSetting",
+        i18n.t("nPlus:dragonButton"),
+        false,
+        function () {
+            var appendTo = (this.dataset.state === "true" ?
+                $dragContainer : $dockedContainer);
+            $scoreboard.detach().appendTo(appendTo);
+        });
+    $scoreboard.appendTo($dockedContainer);
 
     // Initialize
     nPlus.on("initGame", function () {
@@ -1953,8 +2038,9 @@ var popsauce = function () {
     nPlus.autoFocus = true;
 
     nPlus._makeHeaderButton(
-        -60,
-        "auto-focus-button",
+        0,
+        "AutoFocusButton",
+        "AutoFocusSetting",
         i18n.t("nPlus:autoFocusButton"),
         true,
         function () {
