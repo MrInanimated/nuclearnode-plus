@@ -187,6 +187,11 @@
     width: 300px;
 }
 
+#NPlusDragContainer:not(:empty) {
+    background: rgba(0, 0, 0, 0.3);
+    box-shadow: rgba(0, 0, 0, 0.3) 0 0 5px 5px;
+}
+
 #NPlusScoreboard {
     text-align: center;
     color: #ccc;
@@ -206,7 +211,7 @@
 }
 
 #ScoreboardTable {
-    width: 100px;
+    width: 100%;
     table-layout: fixed;
 }
 
