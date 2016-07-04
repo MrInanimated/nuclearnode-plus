@@ -8,7 +8,7 @@
 // @match        http://popsauce.sparklinlabs.com/play/*
 // @match        http://masterofthegrid.sparklinlabs.com/play/*
 // @match        http://gemblasters.sparklinlabs.com/play/*
-// @resource     styles https://github.com/MrInanimated/nuclearnode-plus/raw/develop/dist/nplus.css
+// @resource     styles https://github.com/MrInanimated/nuclearnode-plus/raw/develop/dist/nplus.css#md5=762ab796fc8f2db3cd3234a94862011e
 // @resource     twitch_global http://twitchemotes.com/api_cache/v2/global.json
 // @resource     twitch_subscriber http://twitchemotes.com/api_cache/v2/subscriber.json
 // @resource     ffz_emotes http://api.frankerfacez.com/v1/set/global
@@ -2026,7 +2026,7 @@ var bombparty = function () {
                 -120,
                 "ScoreboardHideButton",
                 "ScoreboardHideSettings",
-                i18n.t("nPlus:hideDead",
+                i18n.t("nPlus:hideDead"),
                 false,
                 function () {
                     if (this.dataset.state === "true")
@@ -2034,7 +2034,7 @@ var bombparty = function () {
                     else
                         $scoreboard.removeClass("hide-dead");
                     refreshDragon();
-                })
+                }
             ).detach()
         );
 
@@ -2058,40 +2058,45 @@ var bombparty = function () {
     };
 
     var addActorRow = function (actor) {
-        $scoreboardTable.append(
-            $("<tr>")
-                .addClass(actor.authId.replace(":", "_"))
-                .append(
-                    $("<td>")
-                        .addClass("scoreboard-name")
-                        .text(scoreboardName(actor))
-                )
-                .append(
-                    $("<td>")
-                        .addClass("scoreboard-flips")
-                        .text(actor.nPlus.flips)
-                )
-                .append(
-                    $("<td>")
-                        .addClass("scoreboard-uflips")
-                        .text(actor.nPlus.uflips)
-                )
-                .append(
-                    $("<td>")
-                        .addClass("scorebaord-lives-lost")
-                        .text(actor.nPlus.livesLost)
-                )
-                .append(
-                    $("<td>")
-                        .addClass("scoreboard-alphas")
-                        .text(makeAlpha(actor.nPlus.alpha))
-                )
-                .append(
-                    $("<td>")
-                        .addClass("scoreboard-words")
-                        .text(actor.nPlus.words)
-                )
-        );
+        var $row = $("<tr>")
+            .addClass(actor.authId.replace(":", "_"))
+            .append(
+                $("<td>")
+                    .addClass("scoreboard-name")
+                    .text(scoreboardName(actor))
+            )
+            .append(
+                $("<td>")
+                    .addClass("scoreboard-flips")
+                    .text(actor.nPlus.flips)
+            )
+            .append(
+                $("<td>")
+                    .addClass("scoreboard-uflips")
+                    .text(actor.nPlus.uflips)
+            )
+            .append(
+                $("<td>")
+                    .addClass("scoreboard-lives-lost")
+                    .text(actor.nPlus.livesLost)
+            )
+            .append(
+                $("<td>")
+                    .addClass("scoreboard-alphas")
+                    .text(makeAlpha(actor.nPlus.alpha))
+            )
+            .append(
+                $("<td>")
+                    .addClass("scoreboard-words")
+                    .text(actor.nPlus.words)
+            );
+
+        if (actor.state === "dead")
+            $row.addClass("dead");
+        if (actor.authId === app.user.authId)
+            $row.addCreditsHeader("self");
+
+        $scoreboardTable.append($row);
         refreshDragon();
     };
 
@@ -2234,6 +2239,11 @@ var bombparty = function () {
             }));
     });
 
+    nPlus.on("death", function (actor) {
+        $("." + actor.authId.replace(":", "_"))
+            .addClass(".dead");
+    });
+
     nPlus.on("endGame", function () {
         clearInterval(timerInterval);
         updateTime();
@@ -2246,7 +2256,9 @@ var bombparty = function () {
     // shortcut function
     var setFocus = function () {
         setTimeout(function () {
-            $("#ChatInputBox").focus();
+            var actor = channel.data.actors[channel.data.activePlayerIndex];
+            if (actor.authId !== app.user.authId)
+                $("#ChatInputBox").focus();
         }, 400);
         focusNext = false;
     };
@@ -2308,7 +2320,7 @@ var bombparty = function () {
             id: "AlphaSetting",
             name: i18n.t("nPlus:scoreboard.alphaSetting.name"),
             title: i18n.t("nPlus:scoreboard.alphaSetting.title"),
-            class: "hide-alpha",
+            class: "hide-alphas",
         },
         {
             id: "WordsSetting",

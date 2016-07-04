@@ -227,11 +227,23 @@
     text-overflow: ellipsis;
 }
 
+#ScoreboardButtonContainer {
+    text-align: left;
+}
+
+#NPlusScoreboard .dead {
+    color: #666;
+}
+
+#NPlusScoreboard .self {
+    background-color: rgba(255, 0, 0, 0.1);
+}
+
 #NPlusScoreboard.hide-dead       .dead,
 #NPlusScoreboard.hide-flips      .scoreboard-flips,
 #NPlusScoreboard.hide-uflips     .scoreboard-uflips,
 #NPlusScoreboard.hide-lives-lost .scoreboard-lives-lost,
-#NPlusScoreboard.hide-alpha      .scoreboard-alpha,
+#NPlusScoreboard.hide-alphas     .scoreboard-alphas,
 #NPlusScoreboard.hide-words      .scoreboard-words {
     display: none;
 }
