@@ -221,6 +221,10 @@
     width: 40px;
 }
 
+#ScoreboardTable thead td.scoreboard-data.scoreboard-alphas {
+    width: 50px;
+}
+
 #ScoreboardTable tbody .scoreboard-name {
     white-space: nowrap;
     overflow: hidden;

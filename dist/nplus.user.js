@@ -8,7 +8,7 @@
 // @match        http://popsauce.sparklinlabs.com/play/*
 // @match        http://masterofthegrid.sparklinlabs.com/play/*
 // @match        http://gemblasters.sparklinlabs.com/play/*
-// @resource     styles https://github.com/MrInanimated/nuclearnode-plus/raw/develop/dist/nplus.css#md5=762ab796fc8f2db3cd3234a94862011e
+// @resource     styles https://github.com/MrInanimated/nuclearnode-plus/raw/develop/dist/nplus.css
 // @resource     twitch_global http://twitchemotes.com/api_cache/v2/global.json
 // @resource     twitch_subscriber http://twitchemotes.com/api_cache/v2/subscriber.json
 // @resource     ffz_emotes http://api.frankerfacez.com/v1/set/global
@@ -177,7 +177,7 @@ i18n.addResourceBundle("en", "nPlus", {
             "title": "Send desktop notifications when you're tabbed out.",
             "options": {
                 "on": "On",
-                "off": "Off",
+                "off": "Off"
             }
         },
         "sound": {
@@ -185,13 +185,25 @@ i18n.addResourceBundle("en", "nPlus", {
             "title": "Play a sound when you receive a notification and are tabbed out.",
             "options": {
                 "on": "On",
-                "off": "Off",
+                "off": "Off"
             }
+        },
+        "volume": {
+            "name": "Notification Sound Volume",
+            "title": "This overrides the game sound level."
         },
         "alias": {
             "name": "Mentions",
             "title": "Change the phrases that will trigger a notification.\nEnter a list of phrases separated by semicolons, e.g. MrInanimated;Inanimated;Animé;Inan",
         },
+        "beforeGame": {
+            "name": "Notify before a game starts",
+            "title": "Play a sound and/or show a desktop notification when a game's about to start so you don't miss it.",
+            "options": {
+                "on": "On",
+                "off": "Off"
+            }
+        }
     },
     "scoreboardSettings": "Scoreboard Settings",
     "scoreboard": {
@@ -229,6 +241,9 @@ i18n.addResourceBundle("en", "nPlus", {
         }
     },
 
+    "newGameNotification": "A new game is starting!",
+    "newGameStarting": "A game's about to start.",
+
     "userList": "User List",
     "ignoredList": "Ignored Users List",
 
@@ -260,9 +275,6 @@ $.extend(window.nPlus, {
 
     // Whether sound notifications are on or not
     soundNotifications: true,
-
-    // Whether to notify at the end of a game
-    endGameNotifications: false,
 
     // a list of aliases for which notifications trigger
     aliases: [],
@@ -1503,6 +1515,8 @@ var core = function () {
     $("#ChatLog").scroll(updateScroll);
     $('#SidebarTabButtons > button[data-tab="Chat"]').click(updateScroll);
 
+    nPlus.notificationSound = new Audio("/sounds/myTurn.wav");
+
     /* Socket event wrapping */
     channel.socket.listeners("chatMessage").pop();
     channel.socket.on("chatMessage", function (e) {
@@ -1535,7 +1549,7 @@ var core = function () {
 
             if (notified && nPlus.isHidden) {
                 if (nPlus.soundNotifications) {
-                    // TODO: play sound
+                    nPlus.notificationSound.play();
                 }
 
                 if (nPlus.browserNotifications &&
@@ -1753,7 +1767,7 @@ var core = function () {
 
     nPlus.addSettingsSelect(
         "Notifications",
-        "soundNotificationsSelect",
+        "SoundNotificationsSelect",
         i18n.t("nPlus:notifications.sound.name"),
         i18n.t("nPlus:notifications.sound.title"),
         {
@@ -1768,8 +1782,29 @@ var core = function () {
         }
     );
 
-    $aliasInput = $("<input>")
+    var $volumeControl = $("<input>")
+        .attr("type", "range")
+        .attr("id", "VolumeControl")
+        .attr("min", 0)
+        .attr("max", 100)
+        .attr("data-n-plus", "value")
+        .val(100)
+        .on("change", function (e) {
+            nPlus.notificationSound.volume = this.value / 100;
+            if (!e.detail || !e.detail.nPlus)
+                nPlus.notificationSound.play();
+        });
+
+    nPlus.addCustomSettingsElement(
+        "Notifications",
+        $volumeControl,
+        i18n.t("nPlus:notifications.volume.name"),
+        i18n.t("nPlus:notifications.volume.title")
+    );
+
+    var $aliasInput = $("<input>")
         .attr("type", "text")
+        .attr("id", "AliasList")
         .attr("data-n-plus", "value")
         .on("change", function () {
             nPlus.aliases = this.value.split(";")
@@ -1976,9 +2011,6 @@ var bombparty = function () {
                         '</tr>' +
                     '</thead>' +
                     '<tbody id="ScoreboardTableBody">' +
-                        '<tr>' +
-                            '<td class="dummy-row" colspan=6></td>' +
-                        '</tr>' +
                     '</tbody>' +
                 '</table>' +
             '</div>' +
@@ -2014,10 +2046,6 @@ var bombparty = function () {
         .find(".scoreboard-words")
         .text(i18n.t("nPlus:wordsText"))
         .attr("title", i18n.t("nPlus:wordsTitle"));
-
-    $scoreboard
-        .find(".dummy-row")
-        .text(i18n.t("nPlus:dummyRow"));
 
     $scoreboard
         .find("#ScoreboardButtonContainer")
@@ -2094,7 +2122,7 @@ var bombparty = function () {
         if (actor.state === "dead")
             $row.addClass("dead");
         if (actor.authId === app.user.authId)
-            $row.addCreditsHeader("self");
+            $row.addClass("self");
 
         $scoreboardTable.append($row);
         refreshDragon();
@@ -2249,6 +2277,25 @@ var bombparty = function () {
         updateTime();
     });
 
+    // Notification before game starts
+    nPlus.on("starting", function () {
+        if (nPlus.notifyBeforeGame && nPlus.isHidden &&
+            !channel.data.actorsByAuthId[app.user.authId]) {
+            if (nPlus.soundNotifications)
+                nPlus.notificationSound.play();
+            if (nPlus.browserNotifications && Notification &&
+                Notification.permission === "granted") {
+                var n = new Notification(i18n.t("nPlus:newGameNotification"), {
+                    body: i18n.t("nPlus:newGameStarting"),
+                    icon: "/images/Bomb.png",
+                });
+
+                setTimeout(n.close.bind(n), 5000);
+            }
+
+        }
+    });
+
     // Auto-focus
     // Flag for saying if the previous turn was the player's
     var focusNext = false;
@@ -2279,10 +2326,10 @@ var bombparty = function () {
     });
 
     nPlus.addSettingsTabSection(
-        "ScoreboardSettings", i18n.t("nPlus:scoreboardSettings"));
+        "Scoreboard", i18n.t("nPlus:scoreboardSettings"));
 
     nPlus.addSettingsSelect(
-        "ScoreboardSettings",
+        "Scoreboard",
         "ContainerSetting",
         i18n.t("nPlus:scoreboard.containerSize.name"),
         i18n.t("nPlus:scoreboard.containerSize.title"),
@@ -2332,7 +2379,7 @@ var bombparty = function () {
 
     $.each(scoreboardOptions, function (i, j) {
         nPlus.addSettingsSelect(
-            "ScoreboardSettings",
+            "Scoreboard",
             j.id, j.name, j.title,
             {
                 "show": i18n.t("nPlus:scoreboard.showHide.show"),
@@ -2345,6 +2392,19 @@ var bombparty = function () {
                     $scoreboard.addClass(j.class);
             });
     });
+
+    nPlus.addSettingsSelect(
+        "Notifications",
+        "NotifyBeforeGameSetting",
+        i18n.t("nPlus:notifications.beforeGame.name"),
+        i18n.t("nPlus:notifications.beforeGame.title"),
+        {
+            "off": i18n.t("nPlus:notifications.beforeGame.options.off"),
+            "on": i18n.t("nPlus:notifications.beforeGame.options.on"),
+        },
+        function () {
+            nPlus.notifyBeforeGame = this.value === "on";
+        });
 
     console.log("NN+: BombParty loaded.");
 
@@ -2445,7 +2505,9 @@ var bindSettingsElement = function (element) {
     switch (element.dataset.nPlus) {
         case "value":
             element.value = GM_getValue(element.id, element.value);
-            element.dispatchEvent(new Event("change"));
+            element.dispatchEvent(new CustomEvent("change", {
+                "detail": { nPlus: true }
+            }));
             element.addEventListener("change", function () {
                 GM_setValue(this.id, this.value);
             });
