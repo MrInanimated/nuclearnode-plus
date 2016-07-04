@@ -193,6 +193,41 @@ i18n.addResourceBundle("en", "nPlus", {
             "title": "Change the phrases that will trigger a notification.\nEnter a list of phrases separated by semicolons, e.g. MrInanimated;Inanimated;Animé;Inan",
         },
     },
+    "scoreboardSettings": "Scoreboard Settings",
+    "scoreboard": {
+        "containerSize": {
+            "name": "Container Size",
+            "title": "Limit the size of the container.",
+            "options": {
+                "compact": "Compact",
+                "fitToPlayers": "Fit to players"
+            }
+        },
+        "flipsSetting": {
+            "name": "Hide Flips",
+            "title": "Hide the flips column on the scoreboard."
+        },
+        "uflipsSetting": {
+            "name": "Hide U-Flips",
+            "title": "Hide the u-flips column on the scoreboard."
+        },
+        "livesLostSetting": {
+            "name": "Hide Deaths",
+            "title": "Hide the deaths column on the scoreboard."
+        },
+        "alphaSetting": {
+            "name": "Hide Alpha",
+            "title": "Hide the alpha column on the scoreboard."
+        },
+        "wordsSetting": {
+            "name": "Hide Words",
+            "title": "Hide the words column on the scoreboard."
+        },
+        "showHide": {
+            "show": "Show",
+            "hide": "Hide"
+        }
+    },
 
     "userList": "User List",
     "ignoredList": "Ignored Users List",
@@ -1899,11 +1934,29 @@ var bombparty = function () {
     var $dragContainer = $("<div>")
         .attr("id", "NPlusDragContainer")
         .addClass("n-plus-scoreboard-container")
-        .appendTo("#App > main")
+        .appendTo("body")
         .draggable({
-            containment: "#App > main",
+            containment: "body",
             scroll: false,
+            cursor: "move",
+            stop: function () {
+                var offset = $(this).offset();
+                $dragListener[0].dataset.nPlusData = JSON.stringify(offset);
+                $dragListener[0].dispatchEvent(new Event("nPlusData"));
+            },
         });
+
+    // Listener for saving the position of the drag container
+    var $dragListener = $("<div>")
+        .attr("id", "DragPositionSetting")
+        .attr("data-n-plus", "data")
+        .attr("data-n-plus-data", JSON.stringify({left: 100, top: 100}))
+        .on("nPlusDataInitial", function () {
+            var offset = JSON.parse(this.dataset.nPlusData);
+            $dragContainer.offset(offset);
+            refreshDragon();
+        })
+        .appendTo("#DummyListeners");
 
     var $scoreboard = $(
         '<div id="NPlusScoreboard">' +
@@ -1917,7 +1970,7 @@ var bombparty = function () {
                             '<td id="ScoreboardButtonContainer"></td>' +
                             '<td class="scoreboard-data scoreboard-flips"></td>' +
                             '<td class="scoreboard-data scoreboard-uflips"></td>' +
-                            '<td class="scoreboard-data scorebaord-lives-lost"></td>' +
+                            '<td class="scoreboard-data scoreboard-lives-lost"></td>' +
                             '<td class="scoreboard-data scoreboard-alphas"></td>' +
                             '<td class="scoreboard-data scoreboard-words"></td>' +
                         '</tr>' +
@@ -1950,7 +2003,7 @@ var bombparty = function () {
         .text(i18n.t("nPlus:uflipsText"))
         .attr("title", i18n.t("nPlus:uflipsTitle"));
     $scoreboard
-        .find(".scorebaord-lives-lost")
+        .find(".scoreboard-lives-lost")
         .text(i18n.t("nPlus:livesLostText"))
         .attr("title", i18n.t("nPlus:livesLostTitle"));
     $scoreboard
@@ -1980,6 +2033,7 @@ var bombparty = function () {
                         $scoreboard.addClass("hide-dead");
                     else
                         $scoreboard.removeClass("hide-dead");
+                    refreshDragon();
                 })
             ).detach()
         );
@@ -2024,6 +2078,11 @@ var bombparty = function () {
                 )
                 .append(
                     $("<td>")
+                        .addClass("scorebaord-lives-lost")
+                        .text(actor.nPlus.livesLost)
+                )
+                .append(
+                    $("<td>")
                         .addClass("scoreboard-alphas")
                         .text(makeAlpha(actor.nPlus.alpha))
                 )
@@ -2057,6 +2116,10 @@ var bombparty = function () {
                 selector += "uflips";
                 value = actor.nPlus.uflips;
                 break;
+            case "livesLost":
+                selector += "lives-lost";
+                value = actor.nPlus.livesLost;
+                break;
             case "alphas":
                 selector += "alphas";
                 value = makeAlpha(actor.nPlus.alpha);
@@ -2085,17 +2148,190 @@ var bombparty = function () {
         });
     $scoreboard.appendTo($dockedContainer);
 
+    var makeTime = function (time) {
+        var seconds = Math.round(time / 1000);
+        var minutes = Math.floor(seconds / 60);
+        var hours = Math.floor(minutes / 60);
+        minutes %= 60;
+        seconds %= 60;
+
+        var result = "";
+        if (hours) {
+            result += hours + ":";
+        }
+
+        if (minutes < 10 && hours) {
+            result += "0";
+        }
+        result += minutes + ":";
+
+        if (seconds < 10) {
+            result += "0";
+        }
+        result += seconds;
+
+        return result;
+    };
+
+    var updateTime = function () {
+        var time = makeTime(Date.now() - channel.data.nPlus.start);
+        $scoreboard
+            .find("#ScoreboardTime")
+            .text(i18n.t("nPlus:timeText", {time: time}));
+    };
+
+    var timerInterval;
+
     // Initialize
     nPlus.on("initGame", function () {
+        clearActorRows();
+
         for (var i = 0; i < channel.data.actors.length; i++) {
             var actor = channel.data.actors[i];
             actor.nPlus = getStatsObject();
+            addActorRow(actor);
         }
 
         channel.data.nPlus = {
             start: Date.now(),
             wordCount: 0,
         };
+
+        $scoreboard
+            .find("#ScoreboardTime")
+            .text(i18n.t("nPlus:timeText", {time: "0:00"}));
+        $scoreboard
+            .find("#ScoreboardWords")
+            .text(i18n.t("nPlus:wordCountText", {words: 0}));
+
+        // Just in case
+        clearInterval(timerInterval);
+        timerInterval = setInterval(updateTime, 1000);
+    });
+
+    nPlus.on("flip", function (actor) {
+        updateProp(actor, "flips");
+    });
+
+    nPlus.on("uflip", function (actor) {
+        updateProp(actor, "uflips");
+    });
+
+    nPlus.on("lostLife", function (actor) {
+        updateProp(actor, "livesLost");
+    });
+
+    nPlus.on("alphaProgress", function (actor) {
+        updateProp(actor, "alphas");
+    });
+
+    nPlus.on("winWord", function (actor) {
+        updateProp(actor, "words");
+        $scoreboard
+            .find("#ScoreboardWords")
+            .text(i18n.t("nPlus:wordCountText", {
+                words: channel.data.nPlus.wordCount
+            }));
+    });
+
+    nPlus.on("endGame", function () {
+        clearInterval(timerInterval);
+        updateTime();
+    });
+
+    // Auto-focus
+    // Flag for saying if the previous turn was the player's
+    var focusNext = false;
+
+    // shortcut function
+    var setFocus = function () {
+        setTimeout(function () {
+            $("#ChatInputBox").focus();
+        }, 400);
+        focusNext = false;
+    };
+
+    nPlus.on("newTurn", function (actor, index) {
+        if (channel.data.actors.length > 1 && nPlus.autoFocus) {
+            if (focusNext)
+                setFocus();
+            else if (actor.authId === app.user.authId)
+                focusNext = true;
+        }
+    });
+
+    nPlus.on("endGame", function () {
+        if (nPlus.autoFocus && focusNext) {
+            setFocus();
+        }
+    });
+
+    nPlus.addSettingsTabSection(
+        "ScoreboardSettings", i18n.t("nPlus:scoreboardSettings"));
+
+    nPlus.addSettingsSelect(
+        "ScoreboardSettings",
+        "ContainerSetting",
+        i18n.t("nPlus:scoreboard.containerSize.name"),
+        i18n.t("nPlus:scoreboard.containerSize.title"),
+        {
+            fitToPlayers: i18n.t("nPlus:scoreboard.containerSize.options.fitToPlayers"),
+            compact: i18n.t("nPlus:scoreboard.containerSize.options.compact"),
+        },
+        function () {
+            if (this.value === "compact")
+                $scoreboard.addClass("fixed-size");
+            else
+                $scoreboard.removeClass("fixed-size");
+        });
+
+    var scoreboardOptions = [
+        {
+            id: "FlipsSetting",
+            name: i18n.t("nPlus:scoreboard.flipsSetting.name"),
+            title: i18n.t("nPlus:scoreboard.flipsSetting.title"),
+            class: "hide-flips",
+        },
+        {
+            id: "UFlipsSetting",
+            name: i18n.t("nPlus:scoreboard.uflipsSetting.name"),
+            title: i18n.t("nPlus:scoreboard.uflipsSetting.title"),
+            class: "hide-uflips",
+        },
+        {
+            id: "LivesLostSetting",
+            name: i18n.t("nPlus:scoreboard.livesLostSetting.name"),
+            title: i18n.t("nPlus:scoreboard.livesLostSetting.title"),
+            class: "hide-lives-lost",
+        },
+        {
+            id: "AlphaSetting",
+            name: i18n.t("nPlus:scoreboard.alphaSetting.name"),
+            title: i18n.t("nPlus:scoreboard.alphaSetting.title"),
+            class: "hide-alpha",
+        },
+        {
+            id: "WordsSetting",
+            name: i18n.t("nPlus:scoreboard.wordsSetting.name"),
+            title: i18n.t("nPlus:scoreboard.wordsSetting.title"),
+            class: "hide-words",
+        },
+    ];
+
+    $.each(scoreboardOptions, function (i, j) {
+        nPlus.addSettingsSelect(
+            "ScoreboardSettings",
+            j.id, j.name, j.title,
+            {
+                "show": i18n.t("nPlus:scoreboard.showHide.show"),
+                "hide": i18n.t("nPlus:scoreboard.showHide.hide"),
+            },
+            function () {
+                if (this.value === "show")
+                    $scoreboard.removeClass(j.class);
+                else
+                    $scoreboard.addClass(j.class);
+            });
     });
 
     console.log("NN+: BombParty loaded.");

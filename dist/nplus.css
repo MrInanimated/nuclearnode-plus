@@ -17,8 +17,8 @@
     position: relative;
 }
 
-#ChatLog li .Actions:hover {
-    display: none;
+#ChatLog li .Actions {
+    display: none !important;
 }
 
 #MoreMessagesAlert {
@@ -221,10 +221,19 @@
     width: 40px;
 }
 
-#ScoreboardTable tbody td:first-child {
+#ScoreboardTable tbody .scoreboard-name {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+#NPlusScoreboard.hide-dead       .dead,
+#NPlusScoreboard.hide-flips      .scoreboard-flips,
+#NPlusScoreboard.hide-uflips     .scoreboard-uflips,
+#NPlusScoreboard.hide-lives-lost .scoreboard-lives-lost,
+#NPlusScoreboard.hide-alpha      .scoreboard-alpha,
+#NPlusScoreboard.hide-words      .scoreboard-words {
+    display: none;
 }
 
 .n-plus-core-button {
