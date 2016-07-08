@@ -3,7 +3,7 @@
 // @version      0.0.0
 // @description  Christmas Theme for BombParty + NuclearNode+
 // @author       MrInanimated
-// @downloadURL  https://github.com/MrInanimated/nuclearnode-plus/raw/develop/themes/nplus-christmas.user.js
+// @downloadURL  https://github.com/MrInanimated/nuclearnode-plus/raw/master/themes/nplus-christmas.user.js
 // @match        http://bombparty.sparklinlabs.com/play/*
 // ==/UserScript==
 
