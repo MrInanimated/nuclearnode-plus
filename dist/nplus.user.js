@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         NuclearNode+
-// @version      0.1.0
+// @version      0.1.1
 // @description  Tools + Utilities for NuclearNode games, including BombParty
 // @author       MrInanimated
 // @downloadURL  https://github.com/MrInanimated/nuclearnode-plus/raw/master/dist/nplus.user.js
@@ -2269,7 +2269,7 @@ var bombparty = function () {
 
     nPlus.on("death", function (actor) {
         $("." + actor.authId.replace(":", "_"))
-            .addClass(".dead");
+            .addClass("dead");
     });
 
     nPlus.on("endGame", function () {
@@ -2339,9 +2339,9 @@ var bombparty = function () {
         },
         function () {
             if (this.value === "compact")
-                $scoreboard.addClass("fixed-size");
+                $scoreboard.addClass("fixed-height");
             else
-                $scoreboard.removeClass("fixed-size");
+                $scoreboard.removeClass("fixed-height");
         });
 
     var scoreboardOptions = [
@@ -2465,9 +2465,9 @@ loadScript("//ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js",
     function () {
         loadScript("//cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.1.1/jquery.contextMenu.min.js");
         loadStyle("//cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.1.1/jquery.contextMenu.min.css");
+        loadScript("//ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js");
     }
 );
-loadScript("//ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js");
 loadStyle("//ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/smoothness/jquery-ui.css");
 loadScript("//cdnjs.cloudflare.com/ajax/libs/autolinker/0.24.1/Autolinker.min.js");
 executeScript("(" + main + ")();");
