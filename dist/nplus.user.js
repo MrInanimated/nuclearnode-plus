@@ -2342,6 +2342,8 @@ var bombparty = function () {
                 $scoreboard.addClass("fixed-height");
             else
                 $scoreboard.removeClass("fixed-height");
+
+            refreshDragon();
         });
 
     var scoreboardOptions = [
