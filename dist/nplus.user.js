@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         NuclearNode+
-// @version      0.1.1
+// @version      0.1.2
 // @description  Tools + Utilities for NuclearNode games, including BombParty
 // @author       MrInanimated
 // @downloadURL  https://github.com/MrInanimated/nuclearnode-plus/raw/master/dist/nplus.user.js
@@ -8,7 +8,7 @@
 // @match        http://popsauce.sparklinlabs.com/play/*
 // @match        http://masterofthegrid.sparklinlabs.com/play/*
 // @match        http://gemblasters.sparklinlabs.com/play/*
-// @resource     styles https://github.com/MrInanimated/nuclearnode-plus/raw/release-0.1.1/dist/nplus.css
+// @resource     styles https://github.com/MrInanimated/nuclearnode-plus/raw/release-0.1.2/dist/nplus.css
 // @resource     twitch_global http://twitchemotes.com/api_cache/v2/global.json
 // @resource     twitch_subscriber http://twitchemotes.com/api_cache/v2/subscriber.json
 // @resource     ffz_emotes http://api.frankerfacez.com/v1/set/global
@@ -167,6 +167,15 @@ i18n.addResourceBundle("en", "nPlus", {
             "options": {
                 "on": "On",
                 "off": "Off"
+            }
+        },
+        "muteChat": {
+            "name": "Mute Chat",
+            "title": "You can choose to blanket mute all of chat or just guest messages.",
+            "options": {
+                "off": "Off",
+                "guests": "Mute all guests",
+                "all": "Mute everyone"
             }
         }
     },
@@ -1523,6 +1532,18 @@ var core = function () {
         if (nPlus.ignoring[e.userAuthId])
             return;
 
+        switch (nPlus.muteChat) {
+            case "guests":
+                if (e.userAuthId.indexOf("guest:") === 0) {
+                    return;
+                }
+                break;
+            case "all":
+                return;
+            default:
+                break;
+        }
+
         var notified = false;
         if (e.text) {
             // Check if username is mentioned
@@ -1728,6 +1749,7 @@ var core = function () {
     // Set up settings
     nPlus.addSettingsTabSection("Chat",
         i18n.t("nPlus:chatSettings"));
+
     nPlus.addSettingsSelect(
         "Chat",
         "TwitchEmoteSelect",
@@ -1742,6 +1764,32 @@ var core = function () {
                 nPlus.twitchEmotes = true;
             else
                 nPlus.twitchEmotes = false;
+        }
+    );
+
+    nPlus.addSettingsSelect(
+        "Chat",
+        "MuteChatSelect",
+        i18n.t("nPlus:chat.muteChat.name"),
+        i18n.t("nPlus:chat.muteChat.title"),
+        {
+            off: i18n.t("nPlus:chat.muteChat.options.off"),
+            guests: i18n.t("nPlus:chat.muteChat.options.guests"),
+            all: i18n.t("nPlus:chat.muteChat.options.all"),
+        },
+        function () {
+            nPlus.muteChat = this.value;
+            switch (this.value) {
+                case "guests":
+                    $("*[class^='Author-guest_'], *[class*=' Author-guest_'")
+                        .addClass("ignored");
+                    break;
+                case "all":
+                    $(".Message").remove();
+                    break;
+                default:
+                    break;
+            }
         }
     );
 
