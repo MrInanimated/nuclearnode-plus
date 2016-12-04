@@ -595,11 +595,11 @@ try {
             titlePrefix: "(bttv) "
         },
         "MikuStare": {
-            src: "//cdn.frankerfacez.com/emoticon/72267/1",
+            src: "//cdn.frankerfacez.com/emoticon/143791/1",
             titlePrefix: "(ffz) ",
         },
         "FrankerZed": {
-            src: "//cdn.frankerfacez.com/emoticon/43246/1",
+            src: "//cdn.frankerfacez.com/emoticon/43060/1",
             titlePrefix: "(ffz) ",
         },
         "WooperZ": {
@@ -619,7 +619,7 @@ try {
             titlePrefix: "(ffz) ",
         },
         "DontBully": {
-            src: "//cdn.frankerfacez.com/emoticon/34549/1",
+            src: "//cdn.frankerfacez.com/emoticon/144330/1",
             titlePrefix: "(ffz) ",
         },
     };
