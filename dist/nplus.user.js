@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         NuclearNode+
-// @version      0.1.2
+// @version      0.1.3
 // @description  Tools + Utilities for NuclearNode games, including BombParty
 // @author       MrInanimated
 // @downloadURL  https://github.com/MrInanimated/nuclearnode-plus/raw/master/dist/nplus.user.js
