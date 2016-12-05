@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         NuclearNode+
-// @version      0.1.3
+// @version      0.1.4
 // @description  Tools + Utilities for NuclearNode games, including BombParty
 // @author       MrInanimated
 // @downloadURL  https://github.com/MrInanimated/nuclearnode-plus/raw/master/dist/nplus.user.js
@@ -214,6 +214,26 @@ i18n.addResourceBundle("en", "nPlus", {
             }
         }
     },
+    "extraSettings": "Extras",
+    "extra": {
+        "hardModes": {
+            "name": "Hard Modes",
+            "title": "Extra harder modes to restrict what words you can use.",
+            "options": {
+                "none": "None",
+                "reverse": "Reverse",
+                "jqv": "JQV",
+                "alpha": "Forced Alpha",
+                "xz": "XZ",
+                "kwxyz": "KWXYZ"
+            }
+        }
+    },
+    "alphaFail": "That word didn't contain {0}!",
+    "jqvFail": "That word didn't contain J, Q, nor V!",
+    "xzFail": "That word didn't contain X, nor Z!",
+    "kwxyzFail": "That word didn't contain K, W, X, Y, nor Z!",
+
     "scoreboardSettings": "Scoreboard Settings",
     "scoreboard": {
         "containerSize": {
@@ -2454,6 +2474,67 @@ var bombparty = function () {
         },
         function () {
             nPlus.notifyBeforeGame = this.value === "on";
+        });
+
+    nPlus.addSettingsTabSection(
+        "Extra", i18n.t("nPlus:extraSettings"));
+
+    // hard modes
+    var inputBox = $("#WordInputBox");
+    var excludeLetters = function (letters, localString) {
+        return function () {
+            var val = inputBox.val().toLowerCase();
+            for (var i in letters) {
+                if (val.indexOf(letters[i]) > -1) {
+                    return;
+                }
+            }
+            inputBox.val(localString);
+        };
+    };
+
+    var hardModes = {
+        none: function () { },
+        reverse: function () {
+            inputBox.val(inputBox.val().split("").reverse().join(""));
+        },
+        jqv: excludeLetters("jqv", i18n.t("nPlus:jqvFail")),
+        alpha: function () {
+            var actor = channel.data.actorsByAuthId[app.user.authId];
+            if (!actor)
+                return;
+
+            var val = inputBox.val().toLowerCase();
+            var currentLetter = alphabet[actor.nPlus.alpha.progress];
+
+            if (val[0] !== currentLetter)
+                inputBox.val(i18n.t("nPlus:alphaFail")
+                    .replace("{0}", currentLetter.toUpperCase()));
+        },
+        xz: excludeLetters("xz", i18n.t("nPlus:xzFail")),
+        kwxyz: excludeLetters("kwxyz", i18n.t("nPlus:kwxyzFail")),
+    };
+    var current = hardModes.none;
+
+    inputBox.change(function () {
+        current();
+    });
+
+    nPlus.addSettingsSelect(
+        "Extra",
+        "HardModes",
+        i18n.t("nPlus:extra.hardModes.name"),
+        i18n.t("nPlus:extra.hardModes.title"),
+        {
+            "none": i18n.t("nPlus:extra.hardModes.options.none"),
+            "reverse": i18n.t("nPlus:extra.hardModes.options.reverse"),
+            "jqv": i18n.t("nPlus:extra.hardModes.options.jqv"),
+            "alpha": i18n.t("nPlus:extra.hardModes.options.alpha"),
+            "xz": i18n.t("nPlus:extra.hardModes.options.xz"),
+            "kwxzy": i18n.t("nPlus:extra.hardModes.options.kwxyz"),
+        },
+        function () {
+            current = hardModes[this.value] || hardMode.none;
         });
 
     console.log("NN+: BombParty loaded.");
