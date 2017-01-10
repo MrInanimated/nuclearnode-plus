@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         NuclearNode+
-// @version      0.1.4
+// @version      0.1.5
 // @description  Tools + Utilities for NuclearNode games, including BombParty
 // @author       MrInanimated
 // @downloadURL  https://github.com/MrInanimated/nuclearnode-plus/raw/master/dist/nplus.user.js
@@ -8,7 +8,7 @@
 // @match        http://popsauce.sparklinlabs.com/play/*
 // @match        http://masterofthegrid.sparklinlabs.com/play/*
 // @match        http://gemblasters.sparklinlabs.com/play/*
-// @resource     styles https://github.com/MrInanimated/nuclearnode-plus/raw/release-0.1.2/dist/nplus.css
+// @resource     styles https://github.com/MrInanimated/nuclearnode-plus/raw/release-0.1.5/dist/nplus.css
 // @resource     twitch_global http://twitchemotes.com/api_cache/v2/global.json
 // @resource     twitch_subscriber http://twitchemotes.com/api_cache/v2/subscriber.json
 // @resource     ffz_emotes http://api.frankerfacez.com/v1/set/global
@@ -229,7 +229,7 @@ i18n.addResourceBundle("en", "nPlus", {
             }
         }
     },
-    "alphaFail": "That word didn't contain {0}!",
+    "alphaFail": "That word didn't begin with {0}!",
     "jqvFail": "That word didn't contain J, Q, nor V!",
     "xzFail": "That word didn't contain X, nor Z!",
     "kwxyzFail": "That word didn't contain K, W, X, Y, nor Z!",

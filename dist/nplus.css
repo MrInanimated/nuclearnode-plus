@@ -290,3 +290,12 @@
 * ::-webkit-scrollbar-corner {
   background-color: rgba(255,255,255,0.1);
 }
+
+/* Fix chat selection on firefox */
+input[type=text],
+textarea {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+}
